@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"orkidslearning/src/config"
 	"orkidslearning/src/database"
+	"orkidslearning/src/middlewares"
 	routerFunctions "orkidslearning/src/router"
+	"orkidslearning/src/services"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -38,14 +40,35 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	expirationDuration, err := time.ParseDuration(env.JWTExpirationTime)
+	if err != nil {
+		log.Fatal("Invalid JWT expiration time:", err)
+	}
+	var jwtService = services.NewJWTService(env.JWTSecretKey, expirationDuration)
+
+	// Define protected router group with JWT middleware
+	protected := router.Group("/protected")
+	protected.Use(middlewares.JWTAuthMiddleware(jwtService))
+
 	// Define routes
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Gin server with MongoDB!"})
 	})
 
+	// Course routes
 	router.GET("/api/courses", routerFunctions.GetAllCourses)
 	router.GET("/api/courses/:id", routerFunctions.GetCourseById)
-	router.POST("/api/courses", routerFunctions.AddCourse)
+
+	// Auth routes
+	router.POST("/api/auth/login", func(ctx *gin.Context) {
+		routerFunctions.LoginHandler(ctx, jwtService)
+	})
+	router.POST("/api/auth/signup", func(ctx *gin.Context) {
+		routerFunctions.SignupHandler(ctx, jwtService)
+	})
+
+	// Protected routes
+	protected.POST("/api/courses", routerFunctions.AddCourse)
 
 	// Start server
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)

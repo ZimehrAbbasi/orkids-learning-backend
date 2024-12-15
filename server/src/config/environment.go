@@ -9,8 +9,10 @@ import (
 
 // Environment holds all environment variables for the application
 type Environment struct {
-	MongoURI string
-	Port     string
+	MongoURI          string
+	Port              string
+	JWTSecretKey      string
+	JWTExpirationTime string
 }
 
 // LoadEnv loads environment variables into the Environment struct
@@ -23,13 +25,23 @@ func LoadEnv() *Environment {
 
 	// Populate the Environment struct
 	env := &Environment{
-		MongoURI: getEnv("MONGO_URI", ""),
-		Port:     getEnv("PORT", "8080"), // Default to "8080" if PORT is not set
+		MongoURI:          getEnv("MONGO_URI", ""),
+		Port:              getEnv("PORT", "8080"), // Default to "8080" if PORT is not set
+		JWTSecretKey:      getEnv("JWT_SECRET_KEY", ""),
+		JWTExpirationTime: getEnv("JWT_EXPIRATION_TIME", "1h"),
 	}
 
 	// Validate critical environment variables
 	if env.MongoURI == "" {
 		log.Fatal("Environment variable MONGO_URI is required but not set")
+	}
+
+	if env.JWTSecretKey == "" {
+		log.Fatal("Environment variable JWT_SECRET_KEY is required but not set")
+	}
+
+	if env.JWTExpirationTime == "" {
+		log.Fatal("Environment variable JWT_EXPIRATION_TIME is required but not set")
 	}
 
 	return env
