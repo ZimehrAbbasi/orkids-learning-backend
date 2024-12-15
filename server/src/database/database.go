@@ -93,3 +93,56 @@ func AddCourseHandler(course models.AddCourse) (*models.Course, error) {
 
 	return &addedCourse, nil
 }
+
+func GetUserByEmail(email string) (*models.User, error) {
+	collection := client.Database("orkidslearning").Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var user models.User
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func CheckIfUserExists(username, email string) error {
+	collection := client.Database("orkidslearning").Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var existingUser models.User
+
+	// Check email
+	if err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&existingUser); err == nil {
+		return fmt.Errorf("email already in use")
+	}
+
+	// Check username
+	if err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&existingUser); err == nil {
+		return fmt.Errorf("username already in use")
+	}
+
+	return nil
+}
+
+func AddUser(user models.AddUser) (*models.User, error) {
+	collection := client.Database("orkidslearning").Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Insert into MongoDB
+	result, err := collection.InsertOne(ctx, user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert user: %v", err)
+	}
+
+	// Return the newly created user
+	return &models.User{
+		ID:       result.InsertedID.(primitive.ObjectID),
+		Username: user.Username,
+		Email:    user.Email,
+		Password: "", // Do not return the password
+	}, nil
+}
