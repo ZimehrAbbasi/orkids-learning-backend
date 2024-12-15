@@ -53,7 +53,6 @@ func main() {
 
 	// Course routes
 	router.GET("/api/courses", routerFunctions.GetAllCourses)
-	router.GET("/api/courses/:id", routerFunctions.GetCourseById)
 
 	// Auth routes
 	router.POST("/api/auth/signup", func(ctx *gin.Context) {
@@ -65,6 +64,7 @@ func main() {
 
 	// Protected routes
 	protected.POST("/api/courses", routerFunctions.AddCourse)
+	protected.GET("/api/courses/:id", routerFunctions.GetCourseById)
 
 	// Start server
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)
