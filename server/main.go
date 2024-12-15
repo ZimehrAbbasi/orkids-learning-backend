@@ -40,11 +40,7 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	expirationDuration, err := time.ParseDuration(env.JWTExpirationTime)
-	if err != nil {
-		log.Fatal("Invalid JWT expiration time:", err)
-	}
-	var jwtService = services.NewJWTService(env.JWTSecretKey, expirationDuration)
+	var jwtService = services.NewJWTService(env.JWTSecretKey, env.JWTExpirationTime)
 
 	// Define protected router group with JWT middleware
 	protected := router.Group("/protected")
@@ -60,11 +56,11 @@ func main() {
 	router.GET("/api/courses/:id", routerFunctions.GetCourseById)
 
 	// Auth routes
-	router.POST("/api/auth/login", func(ctx *gin.Context) {
-		routerFunctions.LoginHandler(ctx, jwtService)
-	})
 	router.POST("/api/auth/signup", func(ctx *gin.Context) {
 		routerFunctions.SignupHandler(ctx, jwtService)
+	})
+	router.POST("/api/auth/login", func(ctx *gin.Context) {
+		routerFunctions.LoginHandler(ctx, jwtService)
 	})
 
 	// Protected routes
