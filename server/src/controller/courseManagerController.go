@@ -26,10 +26,11 @@ func GetCourseById(id string) *models.Course {
 	return course
 }
 
-func AddCourse(course models.AddCourse) {
-	err := database.AddCourseHandler(course)
+func AddCourse(course models.AddCourse) (*models.Course, error) {
+	addedCourse, err := database.AddCourseHandler(course)
 	if err != nil {
 		log.Println("Error adding course ", err)
-		return
+		return nil, err
 	}
+	return addedCourse, nil
 }

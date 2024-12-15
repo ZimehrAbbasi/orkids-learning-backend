@@ -34,7 +34,15 @@ func GetCourseById(c *gin.Context) {
 
 func AddCourse(c *gin.Context) {
 	var course models.AddCourse
-	c.BindJSON(&course)
-	controller.AddCourse(course)
-	c.JSON(http.StatusOK, gin.H{"message": "Course added successfully"})
+	err := c.BindJSON(&course)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	addedCourse, err := controller.AddCourse(course)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add course"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Course added successfully", "course": addedCourse})
 }
