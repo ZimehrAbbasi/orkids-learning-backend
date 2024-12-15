@@ -31,3 +31,10 @@ func GetCourseById(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, course)
 }
+
+func AddCourse(c *gin.Context) {
+	var course models.AddCourse
+	c.BindJSON(&course)
+	controller.AddCourse(course)
+	c.JSON(http.StatusOK, gin.H{"message": "Course added successfully"})
+}

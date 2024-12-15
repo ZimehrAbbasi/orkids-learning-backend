@@ -74,3 +74,16 @@ func GetCourseByIdHandler(id string) (*models.Course, error) {
 	}
 	return &course, nil
 }
+
+func AddCourseHandler(course models.AddCourse) error {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := collection.InsertOne(ctx, course)
+	if err != nil {
+		log.Println("InsertOne error:", err)
+		return err
+	}
+	return nil
+}

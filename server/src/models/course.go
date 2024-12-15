@@ -7,3 +7,8 @@ type Course struct {
 	Title       string             `bson:"title" json:"title"`
 	Description string             `bson:"description" json:"description"`
 }
+
+type AddCourse struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
