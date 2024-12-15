@@ -16,7 +16,12 @@ func GetAllCourses() []models.Course {
 	return courses
 }
 
-func GetCourseById(id string) {
-	// search database for id
-	// return course
+func GetCourseById(id string) *models.Course {
+	var course *models.Course
+	course, err := database.GetCourseByIdHandler(id)
+	if err != nil {
+		log.Println("Error getting course by id ", err)
+		return nil
+	}
+	return course
 }

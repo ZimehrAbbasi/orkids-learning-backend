@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"orkidslearning/src/config"
 	"orkidslearning/src/database"
 	routerFunctions "orkidslearning/src/router"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -35,6 +36,7 @@ func main() {
 	})
 
 	router.GET("/courses", routerFunctions.GetAllCourses)
+	router.GET("/courses/:id", routerFunctions.GetCourseById)
 
 	// Start server
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)

@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"orkidslearning/src/models"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var client *mongo.Client
@@ -50,4 +52,25 @@ func GetAllCoursesHandler() ([]models.Course, error) {
 	}
 
 	return courses, nil
+}
+
+func GetCourseByIdHandler(id string) (*models.Course, error) {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("Invalid ObjectId: %v", err)
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objectId}
+	var course models.Course
+	err = collection.FindOne(ctx, filter).Decode(&course)
+	if err != nil {
+		log.Println("FindOne error:", err)
+		return nil, err
+	}
+	return &course, nil
 }

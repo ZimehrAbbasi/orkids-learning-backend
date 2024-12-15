@@ -1,10 +1,11 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"orkidslearning/src/controller"
 	"orkidslearning/src/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GetAllCourses(c *gin.Context) {
@@ -17,7 +18,16 @@ func GetAllCourses(c *gin.Context) {
 }
 
 func GetCourseById(c *gin.Context) {
-	// Make call to database
-	// get course for specific Id
-	// display the course
+	var course *models.Course
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+	course = controller.GetCourseById(id)
+	if course == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
+	c.JSON(http.StatusOK, course)
 }
