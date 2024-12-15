@@ -14,9 +14,8 @@ import (
 func JWTAuthMiddleware(jwtService *services.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		log.Println("Auth header: ", authHeader)
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			log.Println("Unauthorized")
+			log.Println("Unauthorized 1")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
@@ -25,7 +24,7 @@ func JWTAuthMiddleware(jwtService *services.JWTService) gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwtService.ValidateToken(tokenString)
 		if err != nil || !token.Valid {
-			log.Println("Unauthorized")
+			log.Println("Unauthorized 2")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return

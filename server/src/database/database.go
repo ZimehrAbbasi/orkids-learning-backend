@@ -127,6 +127,21 @@ func CheckIfUserExists(username, email string) error {
 	return nil
 }
 
+func CheckIfUserExistsByUsername(username string) error {
+	collection := client.Database("orkidslearning").Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var existingUser models.User
+
+	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&existingUser)
+	if err != nil {
+		return fmt.Errorf("user does not exist")
+	}
+
+	return nil
+}
+
 func AddUser(user models.AddUser) (*models.User, error) {
 	collection := client.Database("orkidslearning").Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -145,4 +160,90 @@ func AddUser(user models.AddUser) (*models.User, error) {
 		Email:    user.Email,
 		Password: "", // Do not return the password
 	}, nil
+}
+
+func CheckIfCourseExists(courseId string) error {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	log.Println("Checking if course exists", courseId)
+	objectId, err := primitive.ObjectIDFromHex(courseId)
+	if err != nil {
+		log.Printf("Invalid ObjectId: %v", err)
+		return err
+	}
+
+	var course models.Course
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&course)
+	if err != nil {
+		return fmt.Errorf("course does not exist")
+	}
+	return nil
+}
+
+func CheckIfUserIsEnrolledInCourse(username string, courseId string) (bool, error) {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	objectId, err := primitive.ObjectIDFromHex(courseId)
+	if err != nil {
+		log.Printf("Invalid ObjectId: %v", err)
+		return false, err
+	}
+
+	var course models.Course
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&course)
+	if err != nil {
+		return false, err
+	}
+
+	for _, user := range course.EnrolledUsers {
+		if user == username {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func AddUserToCourse(username string, courseId string) error {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	objectId, err := primitive.ObjectIDFromHex(courseId)
+	if err != nil {
+		log.Printf("Invalid ObjectId: %v", err)
+		return err
+	}
+
+	_, err = collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$push": bson.M{"enrolledUsers": username}})
+	if err != nil {
+		log.Println("UpdateOne error:", err)
+		return err
+	}
+
+	return nil
+}
+
+func RemoveUserFromCourse(username string, courseId string) error {
+	collection := client.Database("orkidslearning").Collection("courses")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	objectId, err := primitive.ObjectIDFromHex(courseId)
+	if err != nil {
+		log.Printf("Invalid ObjectId: %v", err)
+		return err
+	}
+
+	_, err = collection.UpdateOne(ctx, bson.M{"_id": objectId}, bson.M{"$pull": bson.M{"enrolledUsers": username}})
+	if err != nil {
+		log.Println("UpdateOne error:", err)
+		return err
+	}
+
+	return nil
 }

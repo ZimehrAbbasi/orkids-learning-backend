@@ -17,6 +17,11 @@ func GetAllCourses(c *gin.Context) {
 }
 
 func GetCourseById(c *gin.Context) {
+	var enrollInCourse models.EnrollInCourse
+	if err := c.ShouldBindJSON(&enrollInCourse); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
@@ -27,7 +32,14 @@ func GetCourseById(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
-	c.JSON(http.StatusOK, course)
+
+	isEnrolled, err := controller.IsUserEnrolledInCourse(enrollInCourse.Username, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enroll in course"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"enrolled": isEnrolled, "course": course})
 }
 
 func AddCourse(c *gin.Context) {

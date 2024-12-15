@@ -64,7 +64,9 @@ func main() {
 
 	// Protected routes
 	protected.POST("/api/courses", routerFunctions.AddCourse)
-	protected.GET("/api/courses/:id", routerFunctions.GetCourseById)
+	protected.POST("/api/courses/:id", routerFunctions.GetCourseById)
+	protected.POST("/api/courses/enroll/:id", routerFunctions.EnrollInCourse)
+	protected.POST("/api/courses/unenroll/:id", routerFunctions.UnenrollFromCourse)
 
 	// Start server
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)
