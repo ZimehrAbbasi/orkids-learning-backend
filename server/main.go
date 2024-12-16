@@ -19,7 +19,11 @@ import (
 func main() {
 
 	var err error
-	env := config.LoadEnv()
+	env, err := config.LoadEnv()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	// Connect to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -28,6 +32,7 @@ func main() {
 	err = database.Connect(ctx, env.MongoURI)
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 
 	// Create a Gin router
@@ -72,6 +77,7 @@ func main() {
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)
 	err = router.Run(":" + env.Port)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 }

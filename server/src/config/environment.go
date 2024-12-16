@@ -1,8 +1,9 @@
 package config
 
 import (
-	"log"
 	"os"
+
+	"orkidslearning/src/utils/errors"
 
 	"github.com/joho/godotenv"
 )
@@ -16,11 +17,11 @@ type Environment struct {
 }
 
 // LoadEnv loads environment variables into the Environment struct
-func LoadEnv() *Environment {
+func LoadEnv() (*Environment, error) {
 	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("No .env file found, relying on system environment variables")
+		return nil, errors.ErrNoEnvFile
 	}
 
 	// Populate the Environment struct
@@ -33,18 +34,18 @@ func LoadEnv() *Environment {
 
 	// Validate critical environment variables
 	if env.MongoURI == "" {
-		log.Fatal("Environment variable MONGO_URI is required but not set")
+		return nil, errors.EnvVariableNotSet("MONGO_URI")
 	}
 
 	if env.JWTSecretKey == "" {
-		log.Fatal("Environment variable JWT_SECRET_KEY is required but not set")
+		return nil, errors.EnvVariableNotSet("JWT_SECRET_KEY")
 	}
 
 	if env.JWTExpirationTime == "" {
-		log.Fatal("Environment variable JWT_EXPIRATION_TIME is required but not set")
+		return nil, errors.EnvVariableNotSet("JWT_EXPIRATION_TIME")
 	}
 
-	return env
+	return env, nil
 }
 
 // getEnv retrieves an environment variable or a default value if not set
