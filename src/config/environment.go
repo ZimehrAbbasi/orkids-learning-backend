@@ -17,6 +17,11 @@ type Environment struct {
 	JWTExpirationTime      string
 	OTELResourceAttributes string
 	FrontendURL            string
+	PostgresHost           string
+	PostgresPort           string
+	PostgresUser           string
+	PostgresPassword       string
+	PostgresDB             string
 }
 
 // LoadEnv loads environment variables into the Environment struct
@@ -36,6 +41,11 @@ func LoadEnv() (*Environment, error) {
 		JWTExpirationTime:      getEnv("JWT_EXPIRATION_TIME", "1h"),
 		OTELResourceAttributes: getEnv("OTEL_RESOURCE_ATTRIBUTES", "service.name=orkidslearning,service.version=0.1.0"),
 		FrontendURL:            getEnv("FRONTEND_URL", "http://localhost:3001"),
+		PostgresHost:           getEnv("POSTGRES_HOST", "localhost"),
+		PostgresPort:           getEnv("POSTGRES_PORT", "5432"),
+		PostgresUser:           getEnv("POSTGRES_USER", "myuser"),
+		PostgresPassword:       getEnv("POSTGRES_PASSWORD", "mypassword"),
+		PostgresDB:             getEnv("POSTGRES_DB", "mydatabase"),
 	}
 
 	// Validate critical environment variables
@@ -61,6 +71,26 @@ func LoadEnv() (*Environment, error) {
 
 	if env.FrontendURL == "" {
 		return nil, errors.EnvVariableNotSet("FRONTEND_URL")
+	}
+
+	if env.PostgresHost == "" {
+		return nil, errors.EnvVariableNotSet("POSTGRES_HOST")
+	}
+
+	if env.PostgresPort == "" {
+		return nil, errors.EnvVariableNotSet("POSTGRES_PORT")
+	}
+
+	if env.PostgresUser == "" {
+		return nil, errors.EnvVariableNotSet("POSTGRES_USER")
+	}
+
+	if env.PostgresPassword == "" {
+		return nil, errors.EnvVariableNotSet("POSTGRES_PASSWORD")
+	}
+
+	if env.PostgresDB == "" {
+		return nil, errors.EnvVariableNotSet("POSTGRES_DB")
 	}
 
 	return env, nil

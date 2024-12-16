@@ -12,6 +12,7 @@ import (
 	"orkidslearning/src/telemetry"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -56,12 +57,16 @@ func main() {
 	}()
 
 	// connect to postgres
+	port, err := strconv.ParseUint(env.PostgresPort, 10, 16)
+	if err != nil {
+		log.Fatalf("Invalid port number: %v", err)
+	}
 	connConfig := pgx.ConnConfig{
-		Host:     "postgres",
-		Port:     5432,
-		User:     "myuser",
-		Password: "mypassword",
-		Database: "mydatabase",
+		Host:     env.PostgresHost,
+		Port:     uint16(port),
+		User:     env.PostgresUser,
+		Password: env.PostgresPassword,
+		Database: env.PostgresDB,
 	}
 	conn, err := database.NewPostgresDatabase(ctx, connConfig)
 	if err != nil {
