@@ -9,6 +9,13 @@ type Course struct {
 	EnrolledUsers []string           `bson:"enrolledUsers" json:"enrolledUsers"`
 }
 
+type CoursePostgres struct {
+	Id            string   `json:"id"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	EnrolledUsers []string `json:"enrolledUsers"`
+}
+
 type AddCourse struct {
 	Title         string   `json:"title"`
 	Description   string   `json:"description"`

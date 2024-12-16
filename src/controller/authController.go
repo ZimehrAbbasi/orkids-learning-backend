@@ -4,57 +4,61 @@ import (
 	"context"
 	"fmt"
 	"log"
-	database "orkidslearning/src/database"
 	models "orkidslearning/src/models/database"
+	services "orkidslearning/src/services"
 
 	"go.opentelemetry.io/otel"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Signup(ctx context.Context, db *database.Database, user models.AddUser) (*models.User, error) {
+func Signup(ctx context.Context, contextService *services.ContextService, user models.AddUser) (*models.UserPostgres, error) {
 	tracer := otel.Tracer("controller")
 	ctx, span := tracer.Start(ctx, "Signup")
 	defer span.End()
 
 	// Check if the username or email is already in use
-	err := db.CheckIfUserExists(ctx, user.Username, user.Email)
+	err := contextService.GetPostgres().CheckIfUserExists(ctx, user.Username, user.Email)
 	if err != nil {
+		log.Println("User with username or email already exists", err)
 		return nil, err // Return the error to the router for appropriate handling
 	}
 
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("Failed to hash password: ", err)
 		return nil, fmt.Errorf("failed to hash password: %v", err)
 	}
 
 	user.Password = string(hashedPassword)
 
 	// Add the user to the database
-	addedUser, err := db.AddUser(ctx, user)
+	addedUser, err := contextService.GetPostgres().AddUser(ctx, user)
 	if err != nil {
+		log.Println("Error adding user: ", err)
 		return nil, err
 	}
 
 	return addedUser, nil
 }
 
-func Login(ctx context.Context, db *database.Database, userCredentials models.LoginUser) (*models.User, error) {
+func Login(ctx context.Context, contextService *services.ContextService, userCredentials models.LoginUser) (*models.UserPostgres, error) {
 	tracer := otel.Tracer("controller")
 	ctx, span := tracer.Start(ctx, "Login")
 	defer span.End()
 
 	// Retrieve the user by email
-	user, err := db.GetUserByEmail(ctx, userCredentials.Email)
+	user, err := contextService.GetPostgres().GetUserByEmail(ctx, userCredentials.Email)
 	if err != nil {
 		log.Println("Error getting user by email: ", err)
 		return nil, fmt.Errorf("user not found")
 	}
 
+	log.Println("User: ", userCredentials)
 	// Compare the provided password with the stored hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userCredentials.Password))
 	if err != nil {
-		log.Println("Invalid password")
+		log.Println("Invalid password", err)
 		return nil, fmt.Errorf("invalid password")
 	}
 

@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
@@ -54,9 +55,27 @@ func main() {
 		}
 	}()
 
+	// connect to postgres
+	connConfig := pgx.ConnConfig{
+		Host:     "postgres",
+		Port:     5432,
+		User:     "myuser",
+		Password: "mypassword",
+		Database: "mydatabase",
+	}
+	conn, err := database.NewPostgresDatabase(ctx, connConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+	defer func() {
+		if disconnectErr := conn.Disconnect(); disconnectErr != nil {
+			log.Printf("Failed to disconnect from the database: %v", disconnectErr)
+		}
+	}()
+
 	// Initialize services
 	jwtService := services.NewJWTService(env.JWTSecretKey, env.JWTExpirationTime)
-	contextService := services.NewContextService(db, jwtService)
+	contextService := services.NewContextService(db, jwtService, conn)
 
 	// Create a Gin router
 	router := gin.New()

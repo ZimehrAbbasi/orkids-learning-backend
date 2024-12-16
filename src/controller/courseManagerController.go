@@ -3,19 +3,19 @@ package controller
 import (
 	"context"
 	"log"
-	database "orkidslearning/src/database"
 	models "orkidslearning/src/models/database"
+	services "orkidslearning/src/services"
 
 	"go.opentelemetry.io/otel"
 )
 
-func GetAllCourses(ctx context.Context, db *database.Database) ([]models.Course, error) {
+func GetAllCourses(ctx context.Context, contextService *services.ContextService) ([]models.CoursePostgres, error) {
 	tracer := otel.Tracer("controller")
 	ctx, span := tracer.Start(ctx, "GetAllCourses")
 	defer span.End()
 
-	var courses []models.Course
-	courses, err := db.GetAllCourses(ctx)
+	var courses []models.CoursePostgres
+	courses, err := contextService.GetPostgres().GetAllCourses(ctx)
 	if err != nil {
 		log.Println("Error getting all courses ", err)
 		return nil, err
@@ -23,13 +23,13 @@ func GetAllCourses(ctx context.Context, db *database.Database) ([]models.Course,
 	return courses, nil
 }
 
-func GetCourseById(ctx context.Context, db *database.Database, id string) (*models.Course, error) {
+func GetCourseById(ctx context.Context, contextService *services.ContextService, id string) (*models.CoursePostgres, error) {
 	tracer := otel.Tracer("controller")
 	ctx, span := tracer.Start(ctx, "GetCourseById")
 	defer span.End()
 
-	var course *models.Course
-	course, err := db.GetCourseByID(ctx, id)
+	var course *models.CoursePostgres
+	course, err := contextService.GetPostgres().GetCourseByID(ctx, id)
 	if err != nil {
 		log.Println("Error getting course by id ", err)
 		return nil, err
@@ -37,12 +37,12 @@ func GetCourseById(ctx context.Context, db *database.Database, id string) (*mode
 	return course, nil
 }
 
-func AddCourse(ctx context.Context, db *database.Database, course models.AddCourse) (*models.Course, error) {
+func AddCourse(ctx context.Context, contextService *services.ContextService, course models.AddCourse) (*models.CoursePostgres, error) {
 	tracer := otel.Tracer("controller")
 	ctx, span := tracer.Start(ctx, "AddCourse")
 	defer span.End()
 
-	addedCourse, err := db.AddCourse(ctx, course)
+	addedCourse, err := contextService.GetPostgres().AddCourse(ctx, course)
 	if err != nil {
 		log.Println("Error adding course ", err)
 		return nil, err
