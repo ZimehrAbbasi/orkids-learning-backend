@@ -16,6 +16,7 @@ type Environment struct {
 	JWTSecretKey           string
 	JWTExpirationTime      string
 	OTELResourceAttributes string
+	FrontendURL            string
 }
 
 // LoadEnv loads environment variables into the Environment struct
@@ -34,6 +35,7 @@ func LoadEnv() (*Environment, error) {
 		JWTSecretKey:           getEnv("JWT_SECRET_KEY", ""),
 		JWTExpirationTime:      getEnv("JWT_EXPIRATION_TIME", "1h"),
 		OTELResourceAttributes: getEnv("OTEL_RESOURCE_ATTRIBUTES", "service.name=orkidslearning,service.version=0.1.0"),
+		FrontendURL:            getEnv("FRONTEND_URL", "http://localhost:3001"),
 	}
 
 	// Validate critical environment variables
@@ -55,6 +57,10 @@ func LoadEnv() (*Environment, error) {
 
 	if env.OTELResourceAttributes == "" {
 		return nil, errors.EnvVariableNotSet("OTEL_RESOURCE_ATTRIBUTES")
+	}
+
+	if env.FrontendURL == "" {
+		return nil, errors.EnvVariableNotSet("FRONTEND_URL")
 	}
 
 	return env, nil
