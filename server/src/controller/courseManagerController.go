@@ -6,24 +6,24 @@ import (
 	models "orkidslearning/src/models/database"
 )
 
-func GetAllCourses() []models.Course {
+func GetAllCourses() ([]models.Course, error) {
 	var courses []models.Course
 	courses, err := database.GetAllCoursesHandler()
 	if err != nil {
 		log.Println("Error getting all courses ", err)
-		return nil
+		return nil, err
 	}
-	return courses
+	return courses, nil
 }
 
-func GetCourseById(id string) *models.Course {
+func GetCourseById(id string) (*models.Course, error) {
 	var course *models.Course
 	course, err := database.GetCourseByIdHandler(id)
 	if err != nil {
 		log.Println("Error getting course by id ", err)
-		return nil
+		return nil, err
 	}
-	return course
+	return course, nil
 }
 
 func AddCourse(course models.AddCourse) (*models.Course, error) {
