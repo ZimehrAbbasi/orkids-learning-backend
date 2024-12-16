@@ -62,7 +62,6 @@ func EnrollInCourse(c *gin.Context) {
 }
 
 func UnenrollFromCourse(c *gin.Context) {
-
 	tracer := otel.Tracer("router")
 	ctx, span := tracer.Start(c.Request.Context(), "UnenrollFromCourse")
 	defer span.End()

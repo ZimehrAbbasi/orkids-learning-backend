@@ -75,14 +75,14 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	defer cancel()
 	traceExporter, err := otlptracegrpc.New(
 		ctx,
-		otlptracegrpc.WithEndpoint("localhost:4317"), // OTLP gRPC endpoint
-		otlptracegrpc.WithInsecure(),                 // Disable TLS (for local setup)
+		otlptracegrpc.WithEndpoint("otel-collector:4317"), // OTLP gRPC endpoint
+		otlptracegrpc.WithInsecure(),                      // Disable TLS (for local setup)
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	sampler := trace.TraceIDRatioBased(0.05)
+	sampler := trace.TraceIDRatioBased(1)
 
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(traceExporter,

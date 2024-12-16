@@ -1,1 +1,4 @@
-.env
+*.env
+.idea/
+tempo-data/blocks/
+tempo-data/wal/

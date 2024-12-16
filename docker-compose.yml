@@ -1,0 +1,87 @@
+services:
+  init:
+    image: grafana/tempo:latest
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - ./tempo-data:/var/tempo
+    networks:
+      - backend-network
+  
+  memcached:
+    image: memcached:1.6.29
+    container_name: memcached
+    ports:
+      - "11211:11211"
+    environment:
+      - MEMCACHED_MAX_MEMORY=64m  # Set the maximum memory usage
+      - MEMCACHED_THREADS=4       # Number of threads to use
+    networks:
+      - backend-network
+  
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    container_name: tempo
+    ports:
+      - "4320:4317"  # OTLP grpc endpoint
+      - "3200:3200"  # Tempo query endpoint
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+      - ./tempo-data:/var/tempo
+    networks:
+      - backend-network
+    depends_on:
+      - init
+      - memcached
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - tempo
+    networks:
+      - backend-network
+  
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    volumes:
+      - ./collector-config.yaml:/etc/otelcol/config.yaml
+    command: ["--config", "/etc/otelcol/config.yaml"]
+    ports:
+      - "4317:4317"  # OTLP grpc endpoint
+    networks:
+      - backend-network
+    depends_on:
+      - tempo
+
+  orkidslearning:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orkids-learning
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./app.env:/root/.env
+    env_file:
+      - app.env
+    depends_on:
+      - otel-collector
+      - tempo
+    networks:
+      - backend-network
+      
+networks:
+  backend-network:
+    driver: bridge
