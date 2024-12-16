@@ -10,11 +10,12 @@ import (
 
 // Environment holds all environment variables for the application
 type Environment struct {
-	MongoURI          string
-	DBName            string
-	Port              string
-	JWTSecretKey      string
-	JWTExpirationTime string
+	MongoURI               string
+	DBName                 string
+	Port                   string
+	JWTSecretKey           string
+	JWTExpirationTime      string
+	OTELResourceAttributes string
 }
 
 // LoadEnv loads environment variables into the Environment struct
@@ -27,11 +28,12 @@ func LoadEnv() (*Environment, error) {
 
 	// Populate the Environment struct
 	env := &Environment{
-		MongoURI:          getEnv("MONGO_URI", ""),
-		Port:              getEnv("PORT", "8080"), // Default to "8080" if PORT is not set
-		DBName:            getEnv("DB_NAME", "orkidslearning"),
-		JWTSecretKey:      getEnv("JWT_SECRET_KEY", ""),
-		JWTExpirationTime: getEnv("JWT_EXPIRATION_TIME", "1h"),
+		MongoURI:               getEnv("MONGO_URI", ""),
+		Port:                   getEnv("PORT", "8080"), // Default to "8080" if PORT is not set
+		DBName:                 getEnv("DB_NAME", "orkidslearning"),
+		JWTSecretKey:           getEnv("JWT_SECRET_KEY", ""),
+		JWTExpirationTime:      getEnv("JWT_EXPIRATION_TIME", "1h"),
+		OTELResourceAttributes: getEnv("OTEL_RESOURCE_ATTRIBUTES", "service.name=orkidslearning,service.version=0.1.0"),
 	}
 
 	// Validate critical environment variables
@@ -49,6 +51,10 @@ func LoadEnv() (*Environment, error) {
 
 	if env.JWTExpirationTime == "" {
 		return nil, errors.EnvVariableNotSet("JWT_EXPIRATION_TIME")
+	}
+
+	if env.OTELResourceAttributes == "" {
+		return nil, errors.EnvVariableNotSet("OTEL_RESOURCE_ATTRIBUTES")
 	}
 
 	return env, nil

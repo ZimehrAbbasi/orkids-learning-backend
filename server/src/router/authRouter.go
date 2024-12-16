@@ -11,9 +11,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
 )
 
 func SignupHandler(c *gin.Context) {
+	tracer := otel.Tracer("router")
+	ctx, span := tracer.Start(c.Request.Context(), "SignupHandler")
+	defer span.End()
 
 	contextService, exists := c.MustGet("contextService").(*services.ContextService)
 	if !exists {
@@ -32,7 +36,7 @@ func SignupHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	addedUser, err := controller.Signup(ctx, contextService.GetDB(), user)
@@ -63,6 +67,9 @@ func SignupHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
+	tracer := otel.Tracer("router")
+	ctx, span := tracer.Start(c.Request.Context(), "LoginHandler")
+	defer span.End()
 
 	contextService, exists := c.MustGet("contextService").(*services.ContextService)
 	if !exists {
@@ -81,7 +88,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	LoginUser, err := controller.Login(ctx, contextService.GetDB(), user)

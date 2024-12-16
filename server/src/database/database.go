@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel"
 )
 
 // Database encapsulates the MongoDB client and provides methods to interact with the database
@@ -46,6 +47,10 @@ func (db *Database) Disconnect(ctx context.Context) error {
 
 // GetAllCourses retrieves all courses
 func (db *Database) GetAllCourses(ctx context.Context) ([]models.Course, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "GetAllCourses")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	cursor, err := collection.Find(ctx, bson.M{})
@@ -66,6 +71,10 @@ func (db *Database) GetAllCourses(ctx context.Context) ([]models.Course, error) 
 
 // GetCourseByID retrieves a course by its ID
 func (db *Database) GetCourseByID(ctx context.Context, id string) (*models.Course, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "GetCourseByID")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	objectId, err := primitive.ObjectIDFromHex(id)
@@ -85,6 +94,10 @@ func (db *Database) GetCourseByID(ctx context.Context, id string) (*models.Cours
 
 // AddCourse adds a new course
 func (db *Database) AddCourse(ctx context.Context, course models.AddCourse) (*models.Course, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "AddCourse")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	result, err := collection.InsertOne(ctx, course)
@@ -102,6 +115,10 @@ func (db *Database) AddCourse(ctx context.Context, course models.AddCourse) (*mo
 
 // GetUserByEmail retrieves a user by email
 func (db *Database) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "GetUserByEmail")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.userColl)
 
 	var user models.User
@@ -114,6 +131,10 @@ func (db *Database) GetUserByEmail(ctx context.Context, email string) (*models.U
 
 // CheckIfUserExists checks if a user exists by username or email
 func (db *Database) CheckIfUserExists(ctx context.Context, username, email string) error {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "CheckIfUserExists")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.userColl)
 
 	if err := collection.FindOne(ctx, bson.M{"email": email}).Err(); err == nil {
@@ -129,6 +150,10 @@ func (db *Database) CheckIfUserExists(ctx context.Context, username, email strin
 
 // AddUser adds a new user
 func (db *Database) AddUser(ctx context.Context, user models.AddUser) (*models.User, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "AddUser")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.userColl)
 
 	result, err := collection.InsertOne(ctx, user)
@@ -146,6 +171,10 @@ func (db *Database) AddUser(ctx context.Context, user models.AddUser) (*models.U
 
 // AddUserToCourse enrolls a user in a course
 func (db *Database) AddUserToCourse(ctx context.Context, username, courseId string) error {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "AddUserToCourse")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	objectId, err := primitive.ObjectIDFromHex(courseId)
@@ -164,6 +193,10 @@ func (db *Database) AddUserToCourse(ctx context.Context, username, courseId stri
 }
 
 func (db *Database) CheckIfUserExistsByUsername(ctx context.Context, username string) error {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "CheckIfUserExistsByUsername")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.userColl)
 
 	err := collection.FindOne(ctx, bson.M{"username": username}).Err()
@@ -174,6 +207,10 @@ func (db *Database) CheckIfUserExistsByUsername(ctx context.Context, username st
 }
 
 func (db *Database) CheckIfCourseExists(ctx context.Context, courseId string) error {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "CheckIfCourseExists")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	objectId, err := primitive.ObjectIDFromHex(courseId)
@@ -190,6 +227,10 @@ func (db *Database) CheckIfCourseExists(ctx context.Context, courseId string) er
 }
 
 func (db *Database) CheckIfUserIsEnrolledInCourse(ctx context.Context, username, courseId string) (bool, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	objectId, err := primitive.ObjectIDFromHex(courseId)
@@ -207,6 +248,10 @@ func (db *Database) CheckIfUserIsEnrolledInCourse(ctx context.Context, username,
 }
 
 func (db *Database) RemoveUserFromCourse(ctx context.Context, username, courseId string) error {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "RemoveUserFromCourse")
+	defer span.End()
+
 	collection := db.client.Database(db.dbName).Collection(db.courseColl)
 
 	objectId, err := primitive.ObjectIDFromHex(courseId)

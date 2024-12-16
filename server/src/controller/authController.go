@@ -7,10 +7,15 @@ import (
 	database "orkidslearning/src/database"
 	models "orkidslearning/src/models/database"
 
+	"go.opentelemetry.io/otel"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func Signup(ctx context.Context, db *database.Database, user models.AddUser) (*models.User, error) {
+	tracer := otel.Tracer("controller")
+	ctx, span := tracer.Start(ctx, "Signup")
+	defer span.End()
+
 	// Check if the username or email is already in use
 	err := db.CheckIfUserExists(ctx, user.Username, user.Email)
 	if err != nil {
@@ -35,6 +40,10 @@ func Signup(ctx context.Context, db *database.Database, user models.AddUser) (*m
 }
 
 func Login(ctx context.Context, db *database.Database, userCredentials models.LoginUser) (*models.User, error) {
+	tracer := otel.Tracer("controller")
+	ctx, span := tracer.Start(ctx, "Login")
+	defer span.End()
+
 	// Retrieve the user by email
 	user, err := db.GetUserByEmail(ctx, userCredentials.Email)
 	if err != nil {

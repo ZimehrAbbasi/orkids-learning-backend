@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
 )
 
 func GetAllCourses(c *gin.Context) {
@@ -38,6 +39,9 @@ func GetAllCourses(c *gin.Context) {
 }
 
 func GetCourseById(c *gin.Context) {
+	tracer := otel.Tracer("router")
+	ctx, span := tracer.Start(c.Request.Context(), "GetCourseById")
+	defer span.End()
 
 	contextService, exists := c.MustGet("contextService").(*services.ContextService)
 	if !exists {
@@ -62,7 +66,7 @@ func GetCourseById(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	course, err := controller.GetCourseById(ctx, contextService.GetDB(), id)

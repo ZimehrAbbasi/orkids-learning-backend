@@ -10,9 +10,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
 )
 
 func EnrollInCourse(c *gin.Context) {
+	tracer := otel.Tracer("router")
+	ctx, span := tracer.Start(c.Request.Context(), "EnrollInCourse")
+	defer span.End()
 
 	contextService, exists := c.MustGet("contextService").(*services.ContextService)
 	if !exists {
@@ -37,7 +41,7 @@ func EnrollInCourse(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	err := controller.EnrollInCourse(ctx, contextService.GetDB(), enrollInCourse.Username, id)
@@ -58,6 +62,10 @@ func EnrollInCourse(c *gin.Context) {
 }
 
 func UnenrollFromCourse(c *gin.Context) {
+
+	tracer := otel.Tracer("router")
+	ctx, span := tracer.Start(c.Request.Context(), "UnenrollFromCourse")
+	defer span.End()
 
 	contextService, exists := c.MustGet("contextService").(*services.ContextService)
 	if !exists {
@@ -82,7 +90,7 @@ func UnenrollFromCourse(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	err := controller.UnenrollFromCourse(ctx, contextService.GetDB(), unenrollFromCourse.Username, id)
