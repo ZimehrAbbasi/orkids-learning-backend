@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -33,6 +34,14 @@ func JWTAuthMiddleware(jwtService *services.JWTService) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func LoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		fmt.Printf("Request: %s %s\n", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+	}
+}
+
 func InjectContextService(contextService *services.ContextService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("contextService", contextService)

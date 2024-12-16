@@ -10,19 +10,22 @@ import (
 // InitializeRoutes sets up all application routes
 func InitializeRoutes(router *gin.Engine, contextService *services.ContextService) {
 
-	router.Use(InjectContextService(contextService))
+	router.Use(LoggerMiddleware())
 
 	// Public routes
 	public := router.Group("/api/public")
+	public.Use(InjectContextService(contextService))
 	initializePublicRoutes(public)
 
 	// Auth routes
 	auth := router.Group("/api/auth")
+	auth.Use(InjectContextService(contextService))
 	initializeAuthRoutes(auth)
 
 	// Protected routes with JWT middleware
 	protected := router.Group("api")
 	protected.Use(JWTAuthMiddleware(contextService.GetJWTService()))
+	protected.Use(InjectContextService(contextService))
 	initializeProtectedRoutes(protected)
 }
 
