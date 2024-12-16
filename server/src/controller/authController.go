@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"log"
 	database "orkidslearning/src/database"
@@ -9,9 +10,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Signup(user models.AddUser) (*models.User, error) {
+func Signup(ctx context.Context, db *database.Database, user models.AddUser) (*models.User, error) {
 	// Check if the username or email is already in use
-	err := database.CheckIfUserExists(user.Username, user.Email)
+	err := db.CheckIfUserExists(ctx, user.Username, user.Email)
 	if err != nil {
 		return nil, err // Return the error to the router for appropriate handling
 	}
@@ -25,7 +26,7 @@ func Signup(user models.AddUser) (*models.User, error) {
 	user.Password = string(hashedPassword)
 
 	// Add the user to the database
-	addedUser, err := database.AddUser(user)
+	addedUser, err := db.AddUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +34,9 @@ func Signup(user models.AddUser) (*models.User, error) {
 	return addedUser, nil
 }
 
-func Login(userCredentials models.LoginUser) (*models.User, error) {
+func Login(ctx context.Context, db *database.Database, userCredentials models.LoginUser) (*models.User, error) {
 	// Retrieve the user by email
-	user, err := database.GetUserByEmail(userCredentials.Email)
+	user, err := db.GetUserByEmail(ctx, userCredentials.Email)
 	if err != nil {
 		log.Println("Error getting user by email: ", err)
 		return nil, fmt.Errorf("user not found")

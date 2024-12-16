@@ -11,6 +11,7 @@ import (
 // Environment holds all environment variables for the application
 type Environment struct {
 	MongoURI          string
+	DBName            string
 	Port              string
 	JWTSecretKey      string
 	JWTExpirationTime string
@@ -28,6 +29,7 @@ func LoadEnv() (*Environment, error) {
 	env := &Environment{
 		MongoURI:          getEnv("MONGO_URI", ""),
 		Port:              getEnv("PORT", "8080"), // Default to "8080" if PORT is not set
+		DBName:            getEnv("DB_NAME", "orkidslearning"),
 		JWTSecretKey:      getEnv("JWT_SECRET_KEY", ""),
 		JWTExpirationTime: getEnv("JWT_EXPIRATION_TIME", "1h"),
 	}
@@ -35,6 +37,10 @@ func LoadEnv() (*Environment, error) {
 	// Validate critical environment variables
 	if env.MongoURI == "" {
 		return nil, errors.EnvVariableNotSet("MONGO_URI")
+	}
+
+	if env.DBName == "" {
+		return nil, errors.EnvVariableNotSet("DB_NAME")
 	}
 
 	if env.JWTSecretKey == "" {

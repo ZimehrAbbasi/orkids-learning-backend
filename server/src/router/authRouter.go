@@ -1,17 +1,26 @@
 package router
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"orkidslearning/src/controller"
 	models "orkidslearning/src/models/database"
 	"orkidslearning/src/models/response"
 	"orkidslearning/src/services"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SignupHandler(c *gin.Context, jwtService *services.JWTService) {
+func SignupHandler(c *gin.Context) {
+
+	contextService, exists := c.MustGet("contextService").(*services.ContextService)
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load contextService"})
+		return
+	}
+
 	// Parse input
 	var user models.AddUser
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -23,7 +32,10 @@ func SignupHandler(c *gin.Context, jwtService *services.JWTService) {
 		return
 	}
 
-	addedUser, err := controller.Signup(user)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	addedUser, err := controller.Signup(ctx, contextService.GetDB(), user)
 	if err != nil {
 		log.Println("Error adding user: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -33,7 +45,7 @@ func SignupHandler(c *gin.Context, jwtService *services.JWTService) {
 		return
 	}
 
-	token, err := jwtService.GenerateToken(addedUser.Username)
+	token, err := contextService.GetJWTService().GenerateToken(addedUser.Username)
 	if err != nil {
 		log.Println("Error generating token: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -50,7 +62,13 @@ func SignupHandler(c *gin.Context, jwtService *services.JWTService) {
 	})
 }
 
-func LoginHandler(c *gin.Context, jwtService *services.JWTService) {
+func LoginHandler(c *gin.Context) {
+
+	contextService, exists := c.MustGet("contextService").(*services.ContextService)
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load contextService"})
+		return
+	}
 
 	// Parse input
 	var user models.LoginUser
@@ -63,7 +81,10 @@ func LoginHandler(c *gin.Context, jwtService *services.JWTService) {
 		return
 	}
 
-	LoginUser, err := controller.Login(user)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	LoginUser, err := controller.Login(ctx, contextService.GetDB(), user)
 	if err != nil {
 		log.Println("Error logging in user: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -73,7 +94,7 @@ func LoginHandler(c *gin.Context, jwtService *services.JWTService) {
 		return
 	}
 
-	token, err := jwtService.GenerateToken(LoginUser.Username)
+	token, err := contextService.GetJWTService().GenerateToken(LoginUser.Username)
 	if err != nil {
 		log.Println("Error generating token: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{

@@ -1,14 +1,15 @@
 package controller
 
 import (
+	"context"
 	"log"
 	database "orkidslearning/src/database"
 	models "orkidslearning/src/models/database"
 )
 
-func GetAllCourses() ([]models.Course, error) {
+func GetAllCourses(ctx context.Context, db *database.Database) ([]models.Course, error) {
 	var courses []models.Course
-	courses, err := database.GetAllCoursesHandler()
+	courses, err := db.GetAllCourses(ctx)
 	if err != nil {
 		log.Println("Error getting all courses ", err)
 		return nil, err
@@ -16,9 +17,9 @@ func GetAllCourses() ([]models.Course, error) {
 	return courses, nil
 }
 
-func GetCourseById(id string) (*models.Course, error) {
+func GetCourseById(ctx context.Context, db *database.Database, id string) (*models.Course, error) {
 	var course *models.Course
-	course, err := database.GetCourseByIdHandler(id)
+	course, err := db.GetCourseByID(ctx, id)
 	if err != nil {
 		log.Println("Error getting course by id ", err)
 		return nil, err
@@ -26,8 +27,8 @@ func GetCourseById(id string) (*models.Course, error) {
 	return course, nil
 }
 
-func AddCourse(course models.AddCourse) (*models.Course, error) {
-	addedCourse, err := database.AddCourseHandler(course)
+func AddCourse(ctx context.Context, db *database.Database, course models.AddCourse) (*models.Course, error) {
+	addedCourse, err := db.AddCourse(ctx, course)
 	if err != nil {
 		log.Println("Error adding course ", err)
 		return nil, err

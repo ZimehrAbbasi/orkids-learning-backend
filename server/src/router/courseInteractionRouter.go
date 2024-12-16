@@ -1,17 +1,25 @@
 package router
 
 import (
-	"log"
+	"context"
 	"net/http"
 	"orkidslearning/src/controller"
 	models "orkidslearning/src/models/database"
 	"orkidslearning/src/models/response"
+	"orkidslearning/src/services"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func EnrollInCourse(c *gin.Context) {
-	log.Println("Enrolling in course", c.Request)
+
+	contextService, exists := c.MustGet("contextService").(*services.ContextService)
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load contextService"})
+		return
+	}
+
 	var enrollInCourse models.EnrollInCourse
 	if err := c.ShouldBindJSON(&enrollInCourse); err != nil {
 		c.JSON(http.StatusBadRequest, response.EnrollInCourseResponse{
@@ -28,7 +36,11 @@ func EnrollInCourse(c *gin.Context) {
 		})
 		return
 	}
-	err := controller.EnrollInCourse(enrollInCourse.Username, id)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	err := controller.EnrollInCourse(ctx, contextService.GetDB(), enrollInCourse.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.EnrollInCourseResponse{
 			Message: "Failed to enroll in course",
@@ -46,6 +58,13 @@ func EnrollInCourse(c *gin.Context) {
 }
 
 func UnenrollFromCourse(c *gin.Context) {
+
+	contextService, exists := c.MustGet("contextService").(*services.ContextService)
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load contextService"})
+		return
+	}
+
 	var unenrollFromCourse models.UnenrollFromCourse
 	if err := c.ShouldBindJSON(&unenrollFromCourse); err != nil {
 		c.JSON(http.StatusBadRequest, response.UnenrollFromCourseResponse{
@@ -62,7 +81,11 @@ func UnenrollFromCourse(c *gin.Context) {
 		})
 		return
 	}
-	err := controller.UnenrollFromCourse(unenrollFromCourse.Username, id)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	err := controller.UnenrollFromCourse(ctx, contextService.GetDB(), unenrollFromCourse.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.UnenrollFromCourseResponse{
 			Message: "Failed to unenroll from course",

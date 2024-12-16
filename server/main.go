@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	api "orkidslearning/src/api"
 	"orkidslearning/src/config"
 	"orkidslearning/src/database"
-	"orkidslearning/src/middlewares"
-	routerFunctions "orkidslearning/src/router"
 	"orkidslearning/src/services"
 	"time"
 
@@ -18,6 +16,7 @@ import (
 
 func main() {
 
+	// Load environment variables
 	var err error
 	env, err := config.LoadEnv()
 	if err != nil {
@@ -29,11 +28,15 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = database.Connect(ctx, env.MongoURI)
+	db, err := database.NewDatabase(ctx, env.MongoURI, env.DBName)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+	defer db.Disconnect(ctx)
+
+	var jwtService = services.NewJWTService(env.JWTSecretKey, env.JWTExpirationTime)
+	var contextService = services.NewContextService(db, jwtService)
 
 	// Create a Gin router
 	router := gin.Default()
@@ -45,33 +48,8 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	var jwtService = services.NewJWTService(env.JWTSecretKey, env.JWTExpirationTime)
-
 	// Define protected router group with JWT middleware
-	protected := router.Group("/protected")
-	protected.Use(middlewares.JWTAuthMiddleware(jwtService))
-
-	// Define routes
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Gin server with MongoDB!"})
-	})
-
-	// Course routes
-	router.GET("/api/courses", routerFunctions.GetAllCourses)
-
-	// Auth routes
-	router.POST("/api/auth/signup", func(ctx *gin.Context) {
-		routerFunctions.SignupHandler(ctx, jwtService)
-	})
-	router.POST("/api/auth/login", func(ctx *gin.Context) {
-		routerFunctions.LoginHandler(ctx, jwtService)
-	})
-
-	// Protected routes
-	protected.POST("/api/courses", routerFunctions.AddCourse)
-	protected.POST("/api/courses/:id", routerFunctions.GetCourseById)
-	protected.POST("/api/courses/enroll/:id", routerFunctions.EnrollInCourse)
-	protected.POST("/api/courses/unenroll/:id", routerFunctions.UnenrollFromCourse)
+	api.InitializeRoutes(router, contextService)
 
 	// Start server
 	fmt.Printf("Server running at http://localhost:%s\n", env.Port)

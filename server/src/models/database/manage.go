@@ -1,7 +1,8 @@
 package models
 
 type EnrollInCourse struct {
-	Username string `json:"username"`
+	Username        string `json:"username"`
+	CheckEnrollment bool   `json:"checkEnrollment" default:"false"`
 }
 
 type UnenrollFromCourse struct {
