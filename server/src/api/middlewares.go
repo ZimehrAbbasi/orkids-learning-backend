@@ -33,3 +33,9 @@ func JWTAuthMiddleware(jwtService *services.JWTService) gin.HandlerFunc {
 		c.Next()
 	}
 }
+func InjectContextService(contextService *services.ContextService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("contextService", contextService)
+		c.Next()
+	}
+}

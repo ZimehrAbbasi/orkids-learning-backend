@@ -47,10 +47,3 @@ func initializeProtectedRoutes(protected *gin.RouterGroup) {
 	protected.POST("/courses/enroll/:id", router.EnrollInCourse)
 	protected.POST("/courses/unenroll/:id", router.UnenrollFromCourse)
 }
-
-func InjectContextService(contextService *services.ContextService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set("contextService", contextService)
-		c.Next()
-	}
-}
