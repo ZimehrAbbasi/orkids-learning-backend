@@ -5,9 +5,15 @@ import (
 	"log"
 
 	"orkidslearning/src/database"
+
+	"go.opentelemetry.io/otel"
 )
 
 func EnrollInCourse(ctx context.Context, db *database.Database, username string, courseId string) error {
+	tracer := otel.Tracer("controller")
+	ctx, span := tracer.Start(ctx, "EnrollInCourse")
+	defer span.End()
+
 	err := db.CheckIfUserExistsByUsername(ctx, username)
 	if err != nil {
 		log.Println("User does not exist", err)
@@ -39,6 +45,10 @@ func EnrollInCourse(ctx context.Context, db *database.Database, username string,
 }
 
 func IsUserEnrolledInCourse(ctx context.Context, db *database.Database, username string, courseId string) (bool, error) {
+	tracer := otel.Tracer("controller")
+	ctx, span := tracer.Start(ctx, "IsUserEnrolledInCourse")
+	defer span.End()
+
 	isEnrolled, err := db.CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
@@ -49,6 +59,10 @@ func IsUserEnrolledInCourse(ctx context.Context, db *database.Database, username
 }
 
 func UnenrollFromCourse(ctx context.Context, db *database.Database, username string, courseId string) error {
+	tracer := otel.Tracer("controller")
+	ctx, span := tracer.Start(ctx, "UnenrollFromCourse")
+	defer span.End()
+
 	err := db.CheckIfUserExistsByUsername(ctx, username)
 	if err != nil {
 		log.Println("User does not exist", err)
