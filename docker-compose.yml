@@ -22,6 +22,20 @@ services:
     networks:
       - backend-network
   
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
   tempo:
     image: grafana/tempo:latest
     command: [ "-config.file=/etc/tempo.yaml" ]
@@ -79,9 +93,13 @@ services:
     depends_on:
       - otel-collector
       - tempo
+      - postgres
     networks:
       - backend-network
       
 networks:
   backend-network:
     driver: bridge
+
+volumes:
+  postgres_data:

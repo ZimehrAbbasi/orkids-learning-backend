@@ -39,7 +39,7 @@ func SignupHandler(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	addedUser, err := controller.Signup(ctx, contextService.GetDB(), user)
+	addedUser, err := controller.Signup(ctx, contextService, user)
 	if err != nil {
 		log.Println("Error adding user: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -91,7 +91,7 @@ func LoginHandler(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	LoginUser, err := controller.Login(ctx, contextService.GetDB(), user)
+	loggedInUser, err := controller.Login(ctx, contextService, user)
 	if err != nil {
 		log.Println("Error logging in user: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -101,7 +101,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := contextService.GetJWTService().GenerateToken(LoginUser.Username)
+	token, err := contextService.GetJWTService().GenerateToken(loggedInUser.Username)
 	if err != nil {
 		log.Println("Error generating token: ", err)
 		c.JSON(http.StatusInternalServerError, response.AuthResponse{
@@ -113,7 +113,7 @@ func LoginHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.AuthResponse{
 		Message: "User logged in successfully",
-		User:    *LoginUser,
+		User:    *loggedInUser,
 		Token:   token,
 	})
 }

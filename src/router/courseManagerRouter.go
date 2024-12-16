@@ -24,7 +24,7 @@ func GetAllCourses(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	courses, err := controller.GetAllCourses(ctx, contextService.GetDB())
+	coursesPostgres, err := controller.GetAllCourses(ctx, contextService)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.GetCoursesResponse{
 			Message: "Failed to get courses",
@@ -34,7 +34,7 @@ func GetAllCourses(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.GetCoursesResponse{
 		Message: "Courses retrieved successfully",
-		Courses: courses,
+		Courses: coursesPostgres,
 	})
 }
 
@@ -69,7 +69,7 @@ func GetCourseById(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	course, err := controller.GetCourseById(ctx, contextService.GetDB(), id)
+	coursePostgres, err := controller.GetCourseById(ctx, contextService, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.GetCourseResponse{
 			Message: "Failed to get course",
@@ -80,7 +80,7 @@ func GetCourseById(c *gin.Context) {
 
 	var isEnrolled bool = false
 	if enrollInCourse.CheckEnrollment {
-		isEnrolled, err = controller.IsUserEnrolledInCourse(ctx, contextService.GetDB(), enrollInCourse.Username, id)
+		isEnrolled, err = controller.IsUserEnrolledInCourse(ctx, contextService, enrollInCourse.Username, id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, response.GetCourseResponse{
 				Message: "Failed to enroll in course",
@@ -92,7 +92,7 @@ func GetCourseById(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.GetCourseResponse{
 		Message:  "Course retrieved successfully",
-		Course:   *course,
+		Course:   *coursePostgres,
 		Enrolled: isEnrolled,
 	})
 }
@@ -117,7 +117,7 @@ func AddCourse(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	addedCourse, err := controller.AddCourse(ctx, contextService.GetDB(), course)
+	addedCoursePostgres, err := controller.AddCourse(ctx, contextService, course)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.AddCourseResponse{
 			Message: "Failed to add course",
@@ -127,7 +127,7 @@ func AddCourse(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.AddCourseResponse{
 		Message: "Course added successfully",
-		Course:  *addedCourse,
+		Course:  *addedCoursePostgres,
 		Added:   true,
 	})
 }

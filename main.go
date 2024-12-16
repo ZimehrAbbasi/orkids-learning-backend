@@ -12,10 +12,12 @@ import (
 	"orkidslearning/src/telemetry"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
@@ -54,9 +56,31 @@ func main() {
 		}
 	}()
 
+	// connect to postgres
+	port, err := strconv.ParseUint(env.PostgresPort, 10, 16)
+	if err != nil {
+		log.Fatalf("Invalid port number: %v", err)
+	}
+	connConfig := pgx.ConnConfig{
+		Host:     env.PostgresHost,
+		Port:     uint16(port),
+		User:     env.PostgresUser,
+		Password: env.PostgresPassword,
+		Database: env.PostgresDB,
+	}
+	conn, err := database.NewPostgresDatabase(ctx, connConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+	defer func() {
+		if disconnectErr := conn.Disconnect(); disconnectErr != nil {
+			log.Printf("Failed to disconnect from the database: %v", disconnectErr)
+		}
+	}()
+
 	// Initialize services
 	jwtService := services.NewJWTService(env.JWTSecretKey, env.JWTExpirationTime)
-	contextService := services.NewContextService(db, jwtService)
+	contextService := services.NewContextService(db, jwtService, conn)
 
 	// Create a Gin router
 	router := gin.New()

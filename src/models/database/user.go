@@ -10,6 +10,13 @@ type User struct {
 	Password string             `bson:"password"` // Hashed password
 }
 
+type UserPostgres struct {
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"` // Hashed password
+}
+
 type AddUser struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`

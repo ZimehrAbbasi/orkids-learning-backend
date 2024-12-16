@@ -44,7 +44,7 @@ func EnrollInCourse(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	err := controller.EnrollInCourse(ctx, contextService.GetDB(), enrollInCourse.Username, id)
+	err := controller.EnrollInCourse(ctx, contextService, enrollInCourse.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.EnrollInCourseResponse{
 			Message: "Failed to enroll in course",
@@ -92,7 +92,7 @@ func UnenrollFromCourse(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	err := controller.UnenrollFromCourse(ctx, contextService.GetDB(), unenrollFromCourse.Username, id)
+	err := controller.UnenrollFromCourse(ctx, contextService, unenrollFromCourse.Username, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.UnenrollFromCourseResponse{
 			Message: "Failed to unenroll from course",
