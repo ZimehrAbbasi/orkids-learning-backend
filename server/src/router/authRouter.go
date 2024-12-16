@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"orkidslearning/src/controller"
-	"orkidslearning/src/models"
+	models "orkidslearning/src/models/database"
 	"orkidslearning/src/services"
 
 	"github.com/gin-gonic/gin"

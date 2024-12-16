@@ -3,8 +3,8 @@ package controller
 import (
 	"fmt"
 	"log"
-	"orkidslearning/src/database"
-	"orkidslearning/src/models"
+	database "orkidslearning/src/database"
+	models "orkidslearning/src/models/database"
 
 	"golang.org/x/crypto/bcrypt"
 )

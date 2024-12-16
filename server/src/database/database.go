@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"orkidslearning/src/models"
+	models "orkidslearning/src/models/database"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
