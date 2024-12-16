@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -17,6 +16,8 @@ import (
 type PostgresDatabase struct {
 	conn *pgx.Conn
 }
+
+// --- Initialization and Connection Management ---
 
 // NewDatabase creates a new Database instance
 func NewPostgresDatabase(ctx context.Context, connConfig pgx.ConnConfig) (*PostgresDatabase, error) {
@@ -33,6 +34,8 @@ func NewPostgresDatabase(ctx context.Context, connConfig pgx.ConnConfig) (*Postg
 func (db *PostgresDatabase) Disconnect() error {
 	return db.conn.Close()
 }
+
+// --- Course Management ---
 
 // GetAllCourses retrieves all courses
 func (db *PostgresDatabase) GetAllCourses(ctx context.Context) ([]models.CoursePostgres, error) {
@@ -71,7 +74,7 @@ func (db *PostgresDatabase) GetCourseByID(ctx context.Context, courseId string) 
 	query := "SELECT id, title, description FROM courses WHERE id = $1"
 	var course models.CoursePostgres
 	var id pgtype.UUID
-	err := db.conn.QueryRowEx(ctx, query, &pgx.QueryExOptions{SimpleProtocol: true}, courseId).Scan(&id, &course.Title, &course.Description)
+	err := db.conn.QueryRow(query, courseId).Scan(&id, &course.Title, &course.Description)
 	if err != nil {
 		log.Println("QueryRow error:", err)
 		return nil, err
@@ -100,6 +103,8 @@ func (db *PostgresDatabase) AddCourse(ctx context.Context, course models.AddCour
 	}, nil
 }
 
+// --- User Management ---
+
 // GetUserByEmail retrieves a user by email
 func (db *PostgresDatabase) GetUserByEmail(ctx context.Context, email string) (*models.UserPostgres, error) {
 	tracer := otel.Tracer("database")
@@ -123,80 +128,6 @@ func (db *PostgresDatabase) GetUserByEmail(ctx context.Context, email string) (*
 	user.Id = strconv.Itoa(id)
 
 	return &user, nil
-}
-
-// CheckIfUserExists checks if a user exists by username or email
-func (db *PostgresDatabase) CheckIfUserExists(ctx context.Context, username, email string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserExists")
-	defer span.End()
-
-	query := "SELECT 1 FROM users WHERE username = $1 OR email = $2"
-	var exists int
-	err := db.conn.QueryRow(query, username, email).Scan(&exists)
-	if err == pgx.ErrNoRows {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return errors.New("user already exists")
-}
-
-func (db *PostgresDatabase) CheckIfUserExistsByUsername(ctx context.Context, username string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserExistsByUsername")
-	defer span.End()
-
-	query := "SELECT 1 FROM users WHERE username = $1"
-	var exists int
-	err := db.conn.QueryRow(query, username).Scan(&exists)
-	if err == pgx.ErrNoRows {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return errors.New("user already exists")
-}
-
-func (db *PostgresDatabase) CheckIfCourseExists(ctx context.Context, courseId string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfCourseExists")
-	defer span.End()
-
-	query := "SELECT 1 FROM courses WHERE id = $1"
-	var exists int
-	err := db.conn.QueryRow(query, courseId).Scan(&exists)
-	if err == pgx.ErrNoRows {
-		// Return an error if the course does not exist
-		return fmt.Errorf("course with ID '%s' does not exist", courseId)
-	}
-	if err != nil {
-		// Handle unexpected errors
-		return fmt.Errorf("error checking course existence: %w", err)
-	}
-	return nil
-}
-
-func (db *PostgresDatabase) CheckIfUserIsEnrolledInCourse(ctx context.Context, username, courseId string) (bool, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
-	defer span.End()
-
-	query := "SELECT 1 FROM course_enrollments WHERE username = $1 AND id = $2"
-	var exists int
-	err := db.conn.QueryRow(query, username, courseId).Scan(&exists)
-	if err == pgx.ErrNoRows {
-		// User is not enrolled in the course
-		return false, nil
-	}
-	if err != nil {
-		// Handle unexpected errors
-		return false, fmt.Errorf("error checking user enrollment: %w", err)
-	}
-	// User is enrolled in the course
-	return exists == 1, nil
 }
 
 // AddUser adds a new user
@@ -246,4 +177,78 @@ func (db *PostgresDatabase) RemoveUserFromCourse(ctx context.Context, username, 
 		return err
 	}
 	return nil
+}
+
+// --- Existence Checks ---
+
+// DoesUserExist checks if a user exists by username or email
+func (db *PostgresDatabase) DoesUserExist(ctx context.Context, username, email string) (bool, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "DoesUserExist")
+	defer span.End()
+
+	query := "SELECT 1 FROM users WHERE username = $1 OR email = $2"
+	var exists int
+	err := db.conn.QueryRow(query, username, email).Scan(&exists)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (db *PostgresDatabase) DoesUserExistsByUsername(ctx context.Context, username string) (bool, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "DoesUserExistsByUsername")
+	defer span.End()
+
+	query := "SELECT 1 FROM users WHERE username = $1"
+	var exists int
+	err := db.conn.QueryRow(query, username).Scan(&exists)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (db *PostgresDatabase) DoesCourseExist(ctx context.Context, courseId string) (bool, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "DoesCourseExist")
+	defer span.End()
+
+	query := "SELECT 1 FROM courses WHERE id = $1"
+	var exists int
+	err := db.conn.QueryRow(query, courseId).Scan(&exists)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("error checking course existence: %w", err)
+	}
+	return true, nil
+}
+
+func (db *PostgresDatabase) IsUserEnrolledInCourse(ctx context.Context, username, courseId string) (bool, error) {
+	tracer := otel.Tracer("database")
+	ctx, span := tracer.Start(ctx, "IsUserEnrolledInCourse")
+	defer span.End()
+
+	query := "SELECT 1 FROM course_enrollments WHERE username = $1 AND id = $2"
+	var exists int
+	err := db.conn.QueryRow(query, username, courseId).Scan(&exists)
+	if err == pgx.ErrNoRows {
+		// User is not enrolled in the course
+		return false, nil
+	}
+	if err != nil {
+		// Handle unexpected errors
+		return false, fmt.Errorf("error checking user enrollment: %w", err)
+	}
+	// User is enrolled in the course
+	return exists == 1, nil
 }

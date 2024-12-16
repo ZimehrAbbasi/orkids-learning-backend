@@ -17,10 +17,13 @@ func Signup(ctx context.Context, contextService *services.ContextService, user m
 	defer span.End()
 
 	// Check if the username or email is already in use
-	err := contextService.GetPostgres().CheckIfUserExists(ctx, user.Username, user.Email)
+	exists, err := contextService.GetPostgres().DoesUserExist(ctx, user.Username, user.Email)
 	if err != nil {
 		log.Println("User with username or email already exists", err)
 		return nil, err // Return the error to the router for appropriate handling
+	}
+	if exists {
+		return nil, fmt.Errorf("user with username or email already exists")
 	}
 
 	// Hash the password

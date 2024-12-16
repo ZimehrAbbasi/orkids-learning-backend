@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 	services "orkidslearning/src/services"
 
@@ -13,19 +14,25 @@ func EnrollInCourse(ctx context.Context, contextService *services.ContextService
 	ctx, span := tracer.Start(ctx, "EnrollInCourse")
 	defer span.End()
 
-	err := contextService.GetPostgres().CheckIfUserExistsByUsername(ctx, username)
+	exists, err := contextService.GetPostgres().DoesUserExistsByUsername(ctx, username)
 	if err != nil {
 		log.Println("User does not exist", err)
 		return err
 	}
+	if !exists {
+		return fmt.Errorf("user does not exist")
+	}
 
-	err = contextService.GetPostgres().CheckIfCourseExists(ctx, courseId)
+	exists, err = contextService.GetPostgres().DoesCourseExist(ctx, courseId)
 	if err != nil {
 		log.Println("Course does not exist", err)
 		return err
 	}
+	if !exists {
+		return fmt.Errorf("course does not exist")
+	}
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	isEnrolled, err := contextService.GetPostgres().IsUserEnrolledInCourse(ctx, username, courseId)
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return err
@@ -48,7 +55,7 @@ func IsUserEnrolledInCourse(ctx context.Context, contextService *services.Contex
 	ctx, span := tracer.Start(ctx, "IsUserEnrolledInCourse")
 	defer span.End()
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	isEnrolled, err := contextService.GetPostgres().IsUserEnrolledInCourse(ctx, username, courseId)
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return false, err
@@ -62,19 +69,25 @@ func UnenrollFromCourse(ctx context.Context, contextService *services.ContextSer
 	ctx, span := tracer.Start(ctx, "UnenrollFromCourse")
 	defer span.End()
 
-	err := contextService.GetPostgres().CheckIfUserExistsByUsername(ctx, username)
+	exists, err := contextService.GetPostgres().DoesUserExistsByUsername(ctx, username)
 	if err != nil {
 		log.Println("User does not exist", err)
 		return err
 	}
+	if !exists {
+		return fmt.Errorf("user does not exist")
+	}
 
-	err = contextService.GetPostgres().CheckIfCourseExists(ctx, courseId)
+	exists, err = contextService.GetPostgres().DoesCourseExist(ctx, courseId)
 	if err != nil {
 		log.Println("Course does not exist", err)
 		return err
 	}
+	if !exists {
+		return fmt.Errorf("course does not exist")
+	}
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	isEnrolled, err := contextService.GetPostgres().IsUserEnrolledInCourse(ctx, username, courseId)
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return err
