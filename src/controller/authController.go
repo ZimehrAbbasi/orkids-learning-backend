@@ -17,7 +17,9 @@ func Signup(ctx context.Context, contextService *services.ContextService, user m
 	defer span.End()
 
 	// Check if the username or email is already in use
-	err := contextService.GetPostgres().CheckIfUserExists(ctx, user.Username, user.Email)
+	_, userSpan := tracer.Start(ctx, "CheckIfUserExists")
+	err := contextService.GetPostgres().CheckIfUserExists(user.Username, user.Email)
+	userSpan.End()
 	if err != nil {
 		log.Println("User with username or email already exists", err)
 		return nil, err // Return the error to the router for appropriate handling
@@ -33,7 +35,9 @@ func Signup(ctx context.Context, contextService *services.ContextService, user m
 	user.Password = string(hashedPassword)
 
 	// Add the user to the database
-	addedUser, err := contextService.GetPostgres().AddUser(ctx, user)
+	_, userSpan = tracer.Start(ctx, "AddUser")
+	addedUser, err := contextService.GetPostgres().AddUser(user)
+	userSpan.End()
 	if err != nil {
 		log.Println("Error adding user: ", err)
 		return nil, err
@@ -48,13 +52,14 @@ func Login(ctx context.Context, contextService *services.ContextService, userCre
 	defer span.End()
 
 	// Retrieve the user by email
-	user, err := contextService.GetPostgres().GetUserByEmail(ctx, userCredentials.Email)
+	_, userSpan := tracer.Start(ctx, "GetUserByEmail")
+	user, err := contextService.GetPostgres().GetUserByEmail(userCredentials.Email)
+	userSpan.End()
 	if err != nil {
 		log.Println("Error getting user by email: ", err)
 		return nil, fmt.Errorf("user not found")
 	}
 
-	log.Println("User: ", userCredentials)
 	// Compare the provided password with the stored hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userCredentials.Password))
 	if err != nil {

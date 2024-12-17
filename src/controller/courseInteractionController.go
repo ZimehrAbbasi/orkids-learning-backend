@@ -13,19 +13,25 @@ func EnrollInCourse(ctx context.Context, contextService *services.ContextService
 	ctx, span := tracer.Start(ctx, "EnrollInCourse")
 	defer span.End()
 
-	err := contextService.GetPostgres().CheckIfUserExistsByUsername(ctx, username)
+	_, userSpan := tracer.Start(ctx, "CheckIfUserExistsByUsername")
+	err := contextService.GetPostgres().CheckIfUserExistsByUsername(username)
+	userSpan.End()
 	if err != nil {
 		log.Println("User does not exist", err)
 		return err
 	}
 
-	err = contextService.GetPostgres().CheckIfCourseExists(ctx, courseId)
+	_, courseSpan := tracer.Start(ctx, "CheckIfCourseExists")
+	err = contextService.GetPostgres().CheckIfCourseExists(courseId)
+	courseSpan.End()
 	if err != nil {
 		log.Println("Course does not exist", err)
 		return err
 	}
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	_, isEnrolledSpan := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
+	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(username, courseId)
+	isEnrolledSpan.End()
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return err
@@ -35,7 +41,9 @@ func EnrollInCourse(ctx context.Context, contextService *services.ContextService
 		return nil
 	}
 
-	err = contextService.GetPostgres().AddUserToCourse(ctx, username, courseId)
+	_, addUserToCourseSpan := tracer.Start(ctx, "AddUserToCourse")
+	err = contextService.GetPostgres().AddUserToCourse(username, courseId)
+	addUserToCourseSpan.End()
 	if err != nil {
 		log.Println("Failed to add user to course", err)
 		return err
@@ -48,7 +56,9 @@ func IsUserEnrolledInCourse(ctx context.Context, contextService *services.Contex
 	ctx, span := tracer.Start(ctx, "IsUserEnrolledInCourse")
 	defer span.End()
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	_, isEnrolledSpan := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
+	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(username, courseId)
+	isEnrolledSpan.End()
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return false, err
@@ -62,19 +72,25 @@ func UnenrollFromCourse(ctx context.Context, contextService *services.ContextSer
 	ctx, span := tracer.Start(ctx, "UnenrollFromCourse")
 	defer span.End()
 
-	err := contextService.GetPostgres().CheckIfUserExistsByUsername(ctx, username)
+	_, userSpan := tracer.Start(ctx, "CheckIfUserExistsByUsername")
+	err := contextService.GetPostgres().CheckIfUserExistsByUsername(username)
+	userSpan.End()
 	if err != nil {
 		log.Println("User does not exist", err)
 		return err
 	}
 
-	err = contextService.GetPostgres().CheckIfCourseExists(ctx, courseId)
+	_, courseSpan := tracer.Start(ctx, "CheckIfCourseExists")
+	err = contextService.GetPostgres().CheckIfCourseExists(courseId)
+	courseSpan.End()
 	if err != nil {
 		log.Println("Course does not exist", err)
 		return err
 	}
 
-	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(ctx, username, courseId)
+	_, isEnrolledSpan := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
+	isEnrolled, err := contextService.GetPostgres().CheckIfUserIsEnrolledInCourse(username, courseId)
+	isEnrolledSpan.End()
 	if err != nil {
 		log.Println("User is already enrolled in course", err)
 		return err
@@ -84,7 +100,9 @@ func UnenrollFromCourse(ctx context.Context, contextService *services.ContextSer
 		return nil
 	}
 
-	err = contextService.GetPostgres().RemoveUserFromCourse(ctx, username, courseId)
+	_, removeUserFromCourseSpan := tracer.Start(ctx, "RemoveUserFromCourse")
+	err = contextService.GetPostgres().RemoveUserFromCourse(username, courseId)
+	removeUserFromCourseSpan.End()
 	if err != nil {
 		log.Println("Failed to remove user from course", err)
 		return err

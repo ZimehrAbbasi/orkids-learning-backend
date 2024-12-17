@@ -11,7 +11,6 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/pgtype"
-	"go.opentelemetry.io/otel"
 )
 
 type PostgresDatabase struct {
@@ -34,12 +33,8 @@ func (db *PostgresDatabase) Disconnect() error {
 	return db.conn.Close()
 }
 
-// GetAllCourses retrieves all courses
-func (db *PostgresDatabase) GetAllCourses(ctx context.Context) ([]models.CoursePostgres, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "GetAllCourses")
-	defer span.End()
-
+// GetAllCoursesFromDatabase retrieves all courses
+func (db *PostgresDatabase) GetAllCoursesFromDatabase() ([]models.CoursePostgres, error) {
 	query := "SELECT id, title, description FROM courses"
 	rows, err := db.conn.Query(query)
 	if err != nil {
@@ -62,16 +57,12 @@ func (db *PostgresDatabase) GetAllCourses(ctx context.Context) ([]models.CourseP
 	return courses, nil
 }
 
-// GetCourseByID retrieves a course by its ID
-func (db *PostgresDatabase) GetCourseByID(ctx context.Context, courseId string) (*models.CoursePostgres, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "GetCourseByID")
-	defer span.End()
-
+// GetCourseByIdFromDatabase retrieves a course by its ID
+func (db *PostgresDatabase) GetCourseByIdFromDatabase(courseId string) (*models.CoursePostgres, error) {
 	query := "SELECT id, title, description FROM courses WHERE id = $1"
 	var course models.CoursePostgres
 	var id pgtype.UUID
-	err := db.conn.QueryRowEx(ctx, query, &pgx.QueryExOptions{SimpleProtocol: true}, courseId).Scan(&id, &course.Title, &course.Description)
+	err := db.conn.QueryRow(query, courseId).Scan(&id, &course.Title, &course.Description)
 	if err != nil {
 		log.Println("QueryRow error:", err)
 		return nil, err
@@ -80,12 +71,8 @@ func (db *PostgresDatabase) GetCourseByID(ctx context.Context, courseId string) 
 	return &course, nil
 }
 
-// AddCourse adds a new course
-func (db *PostgresDatabase) AddCourse(ctx context.Context, course models.AddCourse) (*models.CoursePostgres, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "AddCourse")
-	defer span.End()
-
+// AddCourseToDatabase adds a new course
+func (db *PostgresDatabase) AddCourseToDatabase(course models.AddCourse) (*models.CoursePostgres, error) {
 	query := "INSERT INTO courses (title, description) VALUES ($1, $2) RETURNING id"
 	var id pgtype.UUID
 	err := db.conn.QueryRow(query, course.Title, course.Description).Scan(&id)
@@ -101,11 +88,7 @@ func (db *PostgresDatabase) AddCourse(ctx context.Context, course models.AddCour
 }
 
 // GetUserByEmail retrieves a user by email
-func (db *PostgresDatabase) GetUserByEmail(ctx context.Context, email string) (*models.UserPostgres, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "GetUserByEmail")
-	defer span.End()
-
+func (db *PostgresDatabase) GetUserByEmail(email string) (*models.UserPostgres, error) {
 	query := "SELECT id, username, email, password FROM users WHERE email = $1"
 	var user models.UserPostgres
 
@@ -126,11 +109,7 @@ func (db *PostgresDatabase) GetUserByEmail(ctx context.Context, email string) (*
 }
 
 // CheckIfUserExists checks if a user exists by username or email
-func (db *PostgresDatabase) CheckIfUserExists(ctx context.Context, username, email string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserExists")
-	defer span.End()
-
+func (db *PostgresDatabase) CheckIfUserExists(username, email string) error {
 	query := "SELECT 1 FROM users WHERE username = $1 OR email = $2"
 	var exists int
 	err := db.conn.QueryRow(query, username, email).Scan(&exists)
@@ -143,11 +122,7 @@ func (db *PostgresDatabase) CheckIfUserExists(ctx context.Context, username, ema
 	return errors.New("user already exists")
 }
 
-func (db *PostgresDatabase) CheckIfUserExistsByUsername(ctx context.Context, username string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserExistsByUsername")
-	defer span.End()
-
+func (db *PostgresDatabase) CheckIfUserExistsByUsername(username string) error {
 	query := "SELECT 1 FROM users WHERE username = $1"
 	var exists int
 	err := db.conn.QueryRow(query, username).Scan(&exists)
@@ -160,11 +135,7 @@ func (db *PostgresDatabase) CheckIfUserExistsByUsername(ctx context.Context, use
 	return errors.New("user already exists")
 }
 
-func (db *PostgresDatabase) CheckIfCourseExists(ctx context.Context, courseId string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfCourseExists")
-	defer span.End()
-
+func (db *PostgresDatabase) CheckIfCourseExists(courseId string) error {
 	query := "SELECT 1 FROM courses WHERE id = $1"
 	var exists int
 	err := db.conn.QueryRow(query, courseId).Scan(&exists)
@@ -179,11 +150,7 @@ func (db *PostgresDatabase) CheckIfCourseExists(ctx context.Context, courseId st
 	return nil
 }
 
-func (db *PostgresDatabase) CheckIfUserIsEnrolledInCourse(ctx context.Context, username, courseId string) (bool, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "CheckIfUserIsEnrolledInCourse")
-	defer span.End()
-
+func (db *PostgresDatabase) CheckIfUserIsEnrolledInCourse(username, courseId string) (bool, error) {
 	query := "SELECT 1 FROM course_enrollments WHERE username = $1 AND id = $2"
 	var exists int
 	err := db.conn.QueryRow(query, username, courseId).Scan(&exists)
@@ -200,11 +167,7 @@ func (db *PostgresDatabase) CheckIfUserIsEnrolledInCourse(ctx context.Context, u
 }
 
 // AddUser adds a new user
-func (db *PostgresDatabase) AddUser(ctx context.Context, user models.AddUser) (*models.UserPostgres, error) {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "AddUser")
-	defer span.End()
-
+func (db *PostgresDatabase) AddUser(user models.AddUser) (*models.UserPostgres, error) {
 	query := "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id"
 	var id int
 	err := db.conn.QueryRow(query, user.Username, user.Email, user.Password).Scan(&id)
@@ -220,11 +183,7 @@ func (db *PostgresDatabase) AddUser(ctx context.Context, user models.AddUser) (*
 }
 
 // AddUserToCourse enrolls a user in a course
-func (db *PostgresDatabase) AddUserToCourse(ctx context.Context, username, courseId string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "AddUserToCourse")
-	defer span.End()
-
+func (db *PostgresDatabase) AddUserToCourse(username, courseId string) error {
 	query := "INSERT INTO course_enrollments (username, id) VALUES ($1, $2)"
 	_, err := db.conn.Exec(query, username, courseId)
 	if err != nil {
@@ -235,11 +194,7 @@ func (db *PostgresDatabase) AddUserToCourse(ctx context.Context, username, cours
 }
 
 // RemoveUserFromCourse removes a user from a course
-func (db *PostgresDatabase) RemoveUserFromCourse(ctx context.Context, username, courseId string) error {
-	tracer := otel.Tracer("database")
-	ctx, span := tracer.Start(ctx, "RemoveUserFromCourse")
-	defer span.End()
-
+func (db *PostgresDatabase) RemoveUserFromCourse(username, courseId string) error {
 	query := "DELETE FROM course_enrollments WHERE username = $1 AND id = $2"
 	_, err := db.conn.Exec(query, username, courseId)
 	if err != nil {

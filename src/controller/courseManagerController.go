@@ -15,7 +15,9 @@ func GetAllCourses(ctx context.Context, contextService *services.ContextService)
 	defer span.End()
 
 	var courses []models.CoursePostgres
-	courses, err := contextService.GetPostgres().GetAllCourses(ctx)
+	_, coursesSpan := tracer.Start(ctx, "GetAllCoursesFromDatabase")
+	courses, err := contextService.GetPostgres().GetAllCoursesFromDatabase()
+	coursesSpan.End()
 	if err != nil {
 		log.Println("Error getting all courses ", err)
 		return nil, err
@@ -29,7 +31,9 @@ func GetCourseById(ctx context.Context, contextService *services.ContextService,
 	defer span.End()
 
 	var course *models.CoursePostgres
-	course, err := contextService.GetPostgres().GetCourseByID(ctx, id)
+	_, courseSpan := tracer.Start(ctx, "GetCourseByIdFromDatabase")
+	course, err := contextService.GetPostgres().GetCourseByIdFromDatabase(id)
+	courseSpan.End()
 	if err != nil {
 		log.Println("Error getting course by id ", err)
 		return nil, err
@@ -42,7 +46,9 @@ func AddCourse(ctx context.Context, contextService *services.ContextService, cou
 	ctx, span := tracer.Start(ctx, "AddCourse")
 	defer span.End()
 
-	addedCourse, err := contextService.GetPostgres().AddCourse(ctx, course)
+	_, addCourseSpan := tracer.Start(ctx, "AddCourseToDatabase")
+	addedCourse, err := contextService.GetPostgres().AddCourseToDatabase(course)
+	addCourseSpan.End()
 	if err != nil {
 		log.Println("Error adding course ", err)
 		return nil, err
